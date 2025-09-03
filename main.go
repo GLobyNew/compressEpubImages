@@ -405,26 +405,36 @@ func (p *EPUBProcessor) ProcessMultipleEPUBs(pattern string) error {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <epub-file-or-pattern>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s <epub-file-or-pattern-or-directory>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Examples:\n")
 		fmt.Fprintf(os.Stderr, "  %s book.epub           # Process single file\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  %s '*.epub'            # Process all EPUB files\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s .                   # Process all EPUB files in current directory\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s /path/to/folder     # Process all EPUB files in specified directory\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s '*.epub'            # Process all EPUB files matching pattern\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s 'books/*.epub'      # Process EPUB files in books directory\n", os.Args[0])
 		os.Exit(1)
 	}
 
 	processor := NewEPUBProcessor()
-
-	// Check if input is a single file or pattern
 	input := os.Args[1]
-	if strings.Contains(input, "*") {
-		// Process multiple files
+
+	// Check if input is a directory
+	fileInfo, err := os.Stat(input)
+	if err == nil && fileInfo.IsDir() {
+		// It's a directory - process all EPUB files in it
+		pattern := filepath.Join(input, "*.epub")
+		if err := processor.ProcessMultipleEPUBs(pattern); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+	} else if strings.Contains(input, "*") {
+		// It's a pattern - process matching files
 		if err := processor.ProcessMultipleEPUBs(input); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
 	} else {
-		// Process single file
+		// It's a single file
 		if err := processor.ProcessEPUBFile(input); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
