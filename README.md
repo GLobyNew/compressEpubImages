@@ -1,0 +1,2 @@
+# compressEpubImages
+Compresses EPUB images
